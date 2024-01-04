@@ -1,35 +1,47 @@
-# Import necessary libraries
 from pyartnet import ArtNetNode
-
+import asyncio
 
 class ArtnetHandler:
     def __init__(self, ip_address, port=6454):
         self.node = ArtNetNode(ip_address, port)
+        self.universe = self.node.add_universe(0)
+        self.channels = self.universe.add_channel(start=1, width=3, channel_name="class")
+        
         self.last_sent_data = None
-        self.universe = 0  # Set your Art-Net universe here
         self.previous_indices = [None, None, None]  # Store the previous 3 indices
 
-    def send_data(self, index, landmark_list):
-        # Check if data has changed from the last sent data
-        if index != self.last_sent_data:
-            self.last_sent_data = index
-            # Prepare and send the Art-Net packet
-            # Assuming 'data' is an integer representing the classification index
-            if index == 2:
-                dmx_data = [index] + landmark_list + [0] * (511 - len(landmark_list))
-            else:
-                dmx_data = [index] + [0] * 511  # Art-Net DMX packets are 512 bytes
-            self.node.set_channel(self.universe, 1, dmx_data)
-            self.node.flush()
+    async def send_data(self, index, landmark, weight, height):
+        if index == 2:
+            landmark_x = landmark[8][0]
+            landmark_y = landmark[8][1]
+            print(f"l_X: {landmark_x}")
+            print(f"l_Y: {landmark_y}")
+            
+            x_norm = int(((landmark_x)/weight) * 255)+25
+            y_norm = int((landmark_y/height) * 255)+25
+            print(f"X: {x_norm}")
+            print(f"Y: {y_norm}")
+            
+            self.channels.add_fade([index, x_norm, y_norm], 0)
+            await self.channels
 
-    def is_valid_data(self, index):
-        # Check if the index is different from the previous 3 indices
-        if index not in self.previous_indices:
-            self.previous_indices.pop(0)  # Remove the oldest index
-            self.previous_indices.append(index)  # Add the new index
-            return True
         else:
-            return False
+            self.channels.add_fade([index, 0, 0], 0)
+            await self.channels
+        
+    def is_valid_data(self, index):
+        # Check if the last two indices match the current index and are different from the one before
+        if index == 2 or (self.previous_indices[-1] == index and self.previous_indices[-2] != index):
+        #if self.previous_indices[-1] != index:
+            valid = True
+        else:
+            valid = False
+
+        # Update the list of previous indices
+        self.previous_indices.pop(0)
+        self.previous_indices.append(index)
+
+        return valid
 
 
 # Example usage:

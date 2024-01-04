@@ -6,6 +6,7 @@ import argparse
 import itertools
 from collections import Counter
 from collections import deque
+import asyncio
 
 import cv2 as cv
 import numpy as np
@@ -38,7 +39,7 @@ def get_args():
         default=0.5,
     )
     parser.add_argument(
-        "--ip", help="Send artnet to IP address", type=float, default="127.0.0.1"
+        "--ip", help="Send artnet to IP address", type=str, default="10.255.255.2"
     )
     parser.add_argument("--port", help="Send artnet to port", type=int, default=6454)
 
@@ -47,7 +48,7 @@ def get_args():
     return args
 
 
-def main():
+async def main_async():
     # Argument parsing #################################################################
     args = get_args()
 
@@ -73,7 +74,7 @@ def main():
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
         static_image_mode=use_static_image_mode,
-        max_num_hands=2,
+        max_num_hands=1,
         min_detection_confidence=min_detection_confidence,
         min_tracking_confidence=min_tracking_confidence,
     )
@@ -187,10 +188,11 @@ def main():
                     keypoint_classifier_labels[hand_sign_id],
                     point_history_classifier_labels[most_common_fg_id[0][0]],
                 )
-
+                
                 # Send artnet
                 if artnet_handler.is_valid_data(hand_sign_id):
-                    artnet_handler.send_data(hand_sign_id)
+                    print(hand_sign_id)
+                    await artnet_handler.send_data(index=hand_sign_id, landmark=landmark_list, weight=720, height=550)
 
         else:
             point_history.append([0, 0])
@@ -200,7 +202,9 @@ def main():
 
         # Screen reflection #############################################################
         cv.imshow("Hand Gesture Recognition", debug_image)
-
+        
+        await asyncio.sleep(0)
+    
     cap.release()
     cv.destroyAllWindows()
 
@@ -702,4 +706,4 @@ def draw_info(image, fps, mode, number):
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main_async())
