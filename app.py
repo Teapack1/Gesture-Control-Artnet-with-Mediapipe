@@ -16,6 +16,7 @@ from utils import CvFpsCalc
 from utils import ArtnetHandler
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
+import time
 
 
 def get_args():
@@ -49,6 +50,7 @@ def get_args():
 
 
 async def main_async():
+    start_time = time.time()
     # Argument parsing #################################################################
     args = get_args()
 
@@ -189,16 +191,29 @@ async def main_async():
                     point_history_classifier_labels[most_common_fg_id[0][0]],
                 )
                 
-                # Send artnet
+############### Send artnet ############################################################
+                
                 if artnet_handler.is_valid_data(hand_sign_id):
                     print(hand_sign_id)
-                    await artnet_handler.send_data(index=hand_sign_id, landmark=landmark_list, weight=720, height=550)
+                    try:
+                        x_norm, y_norm = await artnet_handler.send_data(index=hand_sign_id, landmark=landmark_list, weight=720, height=550)
+                    except TypeError:
+                        x_norm, y_norm = None, None
 
-        else:
+                    if x_norm is not None and y_norm is not None:
+                        debug_image = draw_normalized_coordinates(debug_image, x_norm, y_norm)
+        else:   
             point_history.append([0, 0])
 
+############### Draw the rest ############################################################
+            
         debug_image = draw_point_history(debug_image, point_history)
         debug_image = draw_info(debug_image, fps, mode, number)
+
+        hours, minutes, seconds = get_elapsed_time(start_time)
+        debug_image = draw_time(debug_image, hours, minutes, seconds)
+
+
 
         # Screen reflection #############################################################
         cv.imshow("Hand Gesture Recognition", debug_image)
@@ -622,6 +637,7 @@ def draw_info_text(image, brect, handedness, hand_sign_text, finger_gesture_text
         cv.LINE_AA,
     )
 
+    """
     if finger_gesture_text != "":
         cv.putText(
             image,
@@ -633,6 +649,7 @@ def draw_info_text(image, brect, handedness, hand_sign_text, finger_gesture_text
             4,
             cv.LINE_AA,
         )
+          
         cv.putText(
             image,
             "Finger Gesture:" + finger_gesture_text,
@@ -643,7 +660,7 @@ def draw_info_text(image, brect, handedness, hand_sign_text, finger_gesture_text
             2,
             cv.LINE_AA,
         )
-
+    """ 
     return image
 
 
@@ -705,5 +722,37 @@ def draw_info(image, fps, mode, number):
     return image
 
 
+def draw_normalized_coordinates(image, x_norm, y_norm):
+    if x_norm is not None and y_norm is not None:
+        text = f"ch2(x): {x_norm:.2f}, ch3(y): {y_norm:.2f}"
+        image_height, image_width = image.shape[:2]
+        position = (image_width - 330, image_height - 10)  # Positioning at the right bottom edge
+        cv.putText(
+            image,
+            text,
+            position,
+            cv.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (255, 255, 255),
+            1,
+            cv.LINE_AA,
+        )
+    return image
+
+def get_elapsed_time(start_time):
+    elapsed_time = int(time.time() - start_time)
+    hours, remainder = divmod(elapsed_time, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return hours, minutes, seconds
+
+def draw_time(image, hours, minutes, seconds):
+    time_text = f"{hours:02}:{minutes:02}:{seconds:02}"
+    position = (10, image.shape[0] - 10)  # Adjust the position as needed
+    cv.putText(image, time_text, position, cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv.LINE_AA)
+    return image
+
 if __name__ == "__main__":
+    cv.namedWindow("Hand Gesture Recognition", cv.WND_PROP_FULLSCREEN)
+    cv.setWindowProperty("Hand Gesture Recognition", cv.WND_PROP_FULLSCREEN, cv.WINDOW_FULLSCREEN)
+
     asyncio.run(main_async())

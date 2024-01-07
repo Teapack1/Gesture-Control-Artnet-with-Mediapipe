@@ -24,6 +24,8 @@ class ArtnetHandler:
             
             self.channels.add_fade([index, x_norm, y_norm], 0)
             await self.channels
+            return x_norm, y_norm
+
 
         else:
             self.channels.add_fade([index, 0, 0], 0)
