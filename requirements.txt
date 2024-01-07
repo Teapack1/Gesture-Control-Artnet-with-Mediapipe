@@ -1,0 +1,4 @@
+mediapipe==0.10.*
+pyartnet==1.0.*
+opencv-python==4.9.*
+tflite_runtime==2.14.*
