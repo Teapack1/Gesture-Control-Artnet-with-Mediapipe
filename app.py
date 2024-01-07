@@ -85,6 +85,7 @@ async def main_async():
 
     point_history_classifier = PointHistoryClassifier()
 
+    
     artnet_handler = ArtnetHandler(ip_address=ip_address, port=port)
 
     # Read labels ###########################################################
@@ -199,9 +200,21 @@ async def main_async():
                         x_norm, y_norm = await artnet_handler.send_data(index=hand_sign_id, landmark=landmark_list, weight=720, height=550)
                     except TypeError:
                         x_norm, y_norm = None, None
+                    except OSError as e:
+                        # Handle network errors
+                        if e.errno == 101:  # Network is unreachable
+                            print("Network error: The specified address is unreachable.")
+                        else:
+                            print(f"Network error occurred: {e}")
+                        x_norm, y_norm = None, None
+                    except Exception as e:
+                        # Handle other possible exceptions
+                        print(f"An unexpected error occurred: {e}")
+                        x_norm, y_norm = None, None
 
                     if x_norm is not None and y_norm is not None:
                         debug_image = draw_normalized_coordinates(debug_image, x_norm, y_norm)
+
         else:   
             point_history.append([0, 0])
 
