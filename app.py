@@ -163,19 +163,24 @@ async def main_async():
                 )
 
                 # Hand sign classification
+                finger_gesture_id = 0
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
                 if hand_sign_id == 2:  # Point gesture
                     point_history.append(landmark_list[8])
+                    
+                    # Finger gesture classification
+                    
+                    point_history_len = len(pre_processed_point_history_list)
+                    if point_history_len == (history_length * 2):
+                        finger_gesture_id = point_history_classifier(
+                            pre_processed_point_history_list
+                        )
+        
+
                 else:
                     point_history.append([0, 0])
-
-                # Finger gesture classification
-                finger_gesture_id = 0
-                point_history_len = len(pre_processed_point_history_list)
-                if point_history_len == (history_length * 2):
-                    finger_gesture_id = point_history_classifier(
-                        pre_processed_point_history_list
-                    )
+                
+                
 
                 # Calculates the gesture IDs in the latest detection
                 finger_gesture_history.append(finger_gesture_id)
@@ -231,7 +236,7 @@ async def main_async():
         # Screen reflection #############################################################
         cv.imshow("Hand Gesture Recognition", debug_image)
         
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.1)
     
     cap.release()
     cv.destroyAllWindows()
@@ -650,30 +655,30 @@ def draw_info_text(image, brect, handedness, hand_sign_text, finger_gesture_text
         cv.LINE_AA,
     )
 
-    """
+    
     if finger_gesture_text != "":
         cv.putText(
             image,
             "Finger Gesture:" + finger_gesture_text,
-            (10, 60),
+            (10, 50),
             cv.FONT_HERSHEY_SIMPLEX,
-            1.0,
+            0.6,
             (0, 0, 0),
-            4,
+            2,
             cv.LINE_AA,
         )
-          
+           
         cv.putText(
             image,
             "Finger Gesture:" + finger_gesture_text,
-            (10, 60),
+            (10, 50),
             cv.FONT_HERSHEY_SIMPLEX,
-            1.0,
+            0.6,
             (255, 255, 255),
             2,
             cv.LINE_AA,
         )
-    """ 
+    
     return image
 
 
@@ -693,9 +698,9 @@ def draw_info(image, fps, mode, number):
         "FPS:" + str(fps),
         (10, 30),
         cv.FONT_HERSHEY_SIMPLEX,
-        1.0,
+        0.8,
         (0, 0, 0),
-        4,
+        2,
         cv.LINE_AA,
     )
     cv.putText(
@@ -703,7 +708,7 @@ def draw_info(image, fps, mode, number):
         "FPS:" + str(fps),
         (10, 30),
         cv.FONT_HERSHEY_SIMPLEX,
-        1.0,
+        0.8,
         (255, 255, 255),
         2,
         cv.LINE_AA,
@@ -762,6 +767,18 @@ def draw_time(image, hours, minutes, seconds):
     time_text = f"{hours:02}:{minutes:02}:{seconds:02}"
     position = (10, image.shape[0] - 10)  # Adjust the position as needed
     cv.putText(image, time_text, position, cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv.LINE_AA)
+    return image
+
+def calculate_intensity(landmark_list, image):
+    thumb = landmark_list[3]
+    index = landmark_list[8]
+    print(f"Thumb: {thumb}, Index: {index}")
+    
+    x1, y1 = landmark_list[4][0], landmark_list[4][1]
+    x2, y2 = landmark_list[8][0], landmark_list[8][1]
+
+    cv.line(image, (x1, y1), (x2, y2), (0, 0, 255), 5)
+    
     return image
 
 if __name__ == "__main__":
