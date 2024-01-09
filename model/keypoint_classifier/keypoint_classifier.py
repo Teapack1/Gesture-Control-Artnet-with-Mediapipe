@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import numpy as np
-import tflite_runtime.interpreter as tflite
-
+#import tflite_runtime.interpreter as tflite
+import tensorflow.lite as tflite
 
 class KeyPointClassifier(object):
     def __init__(
