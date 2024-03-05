@@ -22,9 +22,9 @@ import time
 def get_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--device", type=int, default=0)
-    parser.add_argument("--width", help="cap width", type=int, default=960)
-    parser.add_argument("--height", help="cap height", type=int, default=540)
+    parser.add_argument("--device", type=int, default=1)
+    parser.add_argument("--width", help="cap width", type=int, default=720)
+    parser.add_argument("--height", help="cap height", type=int, default=480)
 
     parser.add_argument("--use_static_image_mode", action="store_true")
     parser.add_argument(
@@ -222,6 +222,7 @@ async def main_async():
 
         else:   
             point_history.append([0, 0])
+            await artnet_handler.send_data(index=0, landmark=None, weight=720, height=550)
 
 ############### Draw the rest ############################################################
             
@@ -236,7 +237,7 @@ async def main_async():
         # Screen reflection #############################################################
         cv.imshow("Hand Gesture Recognition", debug_image)
         
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.01)
     
     cap.release()
     cv.destroyAllWindows()
@@ -782,7 +783,6 @@ def calculate_intensity(landmark_list, image):
     return image
 
 if __name__ == "__main__":
-    cv.namedWindow("Hand Gesture Recognition", cv.WND_PROP_FULLSCREEN)
-    cv.setWindowProperty("Hand Gesture Recognition", cv.WND_PROP_FULLSCREEN, cv.WINDOW_FULLSCREEN)
+    cv.namedWindow("Hand Gesture Recognition", cv.WND_PROP_AUTOSIZE)
 
     asyncio.run(main_async())

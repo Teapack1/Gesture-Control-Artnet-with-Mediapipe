@@ -22,8 +22,8 @@ class ArtnetHandler:
             print(f"X: {x_norm}")
             print(f"Y: {y_norm}")
             
-            #self.channels.add_fade([index, x_norm, y_norm], 0)
-            #await self.channels
+            self.channels.add_fade([index, x_norm, y_norm], 0)
+            await self.channels
             return x_norm, y_norm
 
 
