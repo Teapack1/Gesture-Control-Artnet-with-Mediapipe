@@ -237,7 +237,7 @@ async def main_async():
         # Screen reflection #############################################################
         cv.imshow("Hand Gesture Recognition", debug_image)
         
-        await asyncio.sleep(0.01)
+        #await asyncio.sleep(0.01)
     
     cap.release()
     cv.destroyAllWindows()
@@ -786,3 +786,4 @@ if __name__ == "__main__":
     cv.namedWindow("Hand Gesture Recognition", cv.WND_PROP_AUTOSIZE)
 
     asyncio.run(main_async())
+    asyncio.wait_for(main_async(), timeout=1.0)
